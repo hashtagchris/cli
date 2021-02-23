@@ -22,6 +22,7 @@ import (
 	secretCmd "github.com/cli/cli/pkg/cmd/secret"
 	sshKeyCmd "github.com/cli/cli/pkg/cmd/ssh-key"
 	versionCmd "github.com/cli/cli/pkg/cmd/version"
+	pagesCmd "github.com/cli/cli/pkg/cmd/pages"
 	"github.com/cli/cli/pkg/cmdutil"
 	"github.com/spf13/cobra"
 )
@@ -75,6 +76,7 @@ func NewCmdRoot(f *cmdutil.Factory, version, buildDate string) *cobra.Command {
 	cmd.AddCommand(configCmd.NewCmdConfig(f))
 	cmd.AddCommand(creditsCmd.NewCmdCredits(f, nil))
 	cmd.AddCommand(gistCmd.NewCmdGist(f))
+	cmd.AddCommand(pagesCmd.NewCmdPages(f))
 	cmd.AddCommand(completionCmd.NewCmdCompletion(f.IOStreams))
 	cmd.AddCommand(secretCmd.NewCmdSecret(f))
 	cmd.AddCommand(sshKeyCmd.NewCmdSSHKey(f))
