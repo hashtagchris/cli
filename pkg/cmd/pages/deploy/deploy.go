@@ -3,10 +3,8 @@ package deploy
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/url"
-	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/MakeNowJust/heredoc"
@@ -43,90 +41,36 @@ func NewCmdDeploy(f *cmdutil.Factory, runF func(*DeployOptions) error) *cobra.Co
 		HttpClient: f.HttpClient,
 	}
 
-	var tokenStdin bool
-
 	cmd := &cobra.Command{
 		Use:   "deploy",
 		Args:  cobra.ExactArgs(1),
-		Short: "Authenticate with a GitHub host",
+		Short: "Deploy an artifact to GitHub Pages",
 		Long: heredoc.Docf(`
-			Authenticate with a GitHub host.
-
-			The default authentication mode is a web-based browser flow.
-
-			Alternatively, pass in a token on standard input by using %[1]s--with-token%[1]s.
-			The minimum required scopes for the token are: "repo", "read:org".
-
-			The --scopes flag accepts a comma separated list of scopes you want your gh credentials to have. If
-			absent, this command ensures that gh has access to a minimum set of scopes.
+			Deploy an artifact to GitHub Pages
 		`, "`"),
 		Example: heredoc.Doc(`
-			# start interactive setup
-			$ gh auth login
-
-			# authenticate against github.com by reading the token from a file
-			$ gh auth login --with-token < mytoken.txt
-
-			# authenticate with a specific GitHub Enterprise Server instance
-			$ gh auth login --hostname enterprise.internal
+			# Deploy to pages with an HTTP url
+			$ gh pages deploy https://example.com/foo.zip
 		`),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if !opts.IO.CanPrompt() && !(tokenStdin || opts.Web) {
-				return &cmdutil.FlagError{Err: errors.New("--web or --with-token required when not running interactively")}
-			}
-
 			opts.BaseRepo = f.BaseRepo
 
 			if len(args) > 0 {
 				opts.ArtifactUrl = args[0]
 			}
 
-			if tokenStdin && opts.Web {
-				return &cmdutil.FlagError{Err: errors.New("specify only one of --web or --with-token")}
-			}
-
-			if tokenStdin {
-				defer opts.IO.In.Close()
-				token, err := ioutil.ReadAll(opts.IO.In)
-				if err != nil {
-					return fmt.Errorf("failed to read token from STDIN: %w", err)
-				}
-				opts.Token = strings.TrimSpace(string(token))
-			}
-
-			if opts.IO.CanPrompt() && opts.Token == "" && !opts.Web {
-				opts.Interactive = true
-			}
-
-			if cmd.Flags().Changed("hostname") {
-				if err := ghinstance.HostnameValidator(opts.Hostname); err != nil {
-					return &cmdutil.FlagError{Err: fmt.Errorf("error parsing --hostname: %w", err)}
-				}
-			}
-
-			if !opts.Interactive {
-				if opts.Hostname == "" {
-					opts.Hostname = ghinstance.Default()
-				}
-			}
-
 			if runF != nil {
 				return runF(opts)
 			}
 
-			return loginRun(opts)
+			return deployRun(opts)
 		},
 	}
-
-	cmd.Flags().StringVarP(&opts.Hostname, "hostname", "h", "", "The hostname of the GitHub instance to authenticate with")
-	cmd.Flags().StringSliceVarP(&opts.Scopes, "scopes", "s", nil, "Additional authentication scopes for gh to have")
-	cmd.Flags().BoolVar(&tokenStdin, "with-token", false, "Read token from standard input")
-	cmd.Flags().BoolVarP(&opts.Web, "web", "w", false, "Open a browser to authenticate")
 
 	return cmd
 }
 
-func loginRun(opts *DeployOptions) error {
+func deployRun(opts *DeployOptions) error {
 	_, err := opts.Config()
 	if err != nil {
 		return err
