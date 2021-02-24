@@ -50,16 +50,17 @@ func NewCmdDeploy(f *cmdutil.Factory, runF func(*DeployOptions) error) *cobra.Co
 		Short: "Deploy an artifact to GitHub Pages",
 		Long: heredoc.Docf(`
 			Deploy an artifact to GitHub Pages
-		`, "`"),
+		`),
 		Example: heredoc.Doc(`
-			# Deploy to pages with an actions workflow run artifact or an http url
-			# Specify a run id
-			$ gh pages deploy 42
-			# Specify the current run id within an actions workflow
-			$ echo ${{secrets.GITHUB_TOKEN}} | gh auth login --with-token
-			$ gh pages deploy $GITHUB_RUN_ID
-			# Specify a url
+			# Deploy using a http url
 			$ gh pages deploy https://example.com/foo.zip
+
+			# Deploy a workflow run's 'gh-pages' artifact by specifying the run id
+			$ gh pages deploy 5551111
+
+			# As part of an actions workflow, deploy a 'gh-pages' artifact uploaded in a previous step
+			- run: echo ${{secrets.GITHUB_TOKEN}} | gh auth login --with-token
+			- run: gh pages deploy $GITHUB_RUN_ID
 		`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			opts.BaseRepo = f.BaseRepo
