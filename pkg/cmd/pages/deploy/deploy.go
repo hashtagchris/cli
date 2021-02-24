@@ -97,8 +97,6 @@ func deployRun(opts *DeployOptions) error {
 		return err
 	}
 
-	fmt.Printf("Hello world: %s\n", opts.SelectorArg)
-
 	var artifactURL *url.URL
 	if runId, err := strconv.ParseUint(opts.SelectorArg, 10, 64); err == nil {
 		downloadUrl, err := getArtifactUrl(apiClient, baseRepo, runId)

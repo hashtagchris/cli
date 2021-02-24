@@ -33,8 +33,13 @@ func GetActionsArtifacts(client *Client, repo ghrepo.Interface, runId uint64) ([
 }
 
 func GetSignedDownloadUrl(client *Client, downloadUrl string) (*url.URL, error) {
-
 	httpClient := client.http
+
+	originalCheckRedirect := httpClient.CheckRedirect
+	defer func() {
+		httpClient.CheckRedirect = originalCheckRedirect
+	}()
+
 	httpClient.CheckRedirect = checkRedirect
 
 	resp, err := httpClient.Get(downloadUrl)
